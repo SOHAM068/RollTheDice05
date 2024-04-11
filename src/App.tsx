@@ -1,6 +1,5 @@
-import { StyleSheet, Text, View, Pressable, Image, ImageSourcePropType } from 'react-native'
-import React from 'react'
-import { useState } from 'react'
+import { StyleSheet, Text, View, Pressable, Image, ImageSourcePropType, Animated, Easing } from 'react-native'
+import React, { useState, useRef, useEffect } from 'react'
 import { PropsWithChildren } from 'react'
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 
@@ -29,6 +28,12 @@ const options = {
 
 export default function App(): JSX.Element {
   const [diceImage, setDiceImage] = useState<ImageSourcePropType>(DiceOne);
+  const [bouncingValue] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    // Roll the dice when the component mounts
+    rollTheDice();
+  }, []);
 
   const rollTheDice = () => {
     let randomNumber = Math.floor(Math.random() * 6) + 1;
@@ -56,11 +61,28 @@ export default function App(): JSX.Element {
         break;
     }
     ReactNativeHapticFeedback.trigger("impactLight", options);
+
+    // Start the bouncing animation
+    Animated.sequence([
+      Animated.timing(bouncingValue, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bouncingValue, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
+
   return (
     <>
       <View style={styles.container}>
-        <Dice imageUrl={diceImage} />
+        <Animated.View style={[styles.diceContainer, { transform: [{ scale: bouncingValue }] }]}>
+          <Dice imageUrl={diceImage} />
+        </Animated.View>
         <Pressable onPress={rollTheDice}>
           <Text style={styles.rollDiceBtnText}>Roll The Dice</Text>
         </Pressable>
@@ -94,4 +116,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
   },
-})
+});
